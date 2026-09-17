@@ -179,4 +179,108 @@ g + ggtitle("Height Vs Diameter")
 ![](line.png){ width=70% }
 </center>
 
+## Task 8: AI
 
+I used AI (Claude) to help build one new R function, ssDecomp(), that generalizes the four panel sum of squares decomposition from Task 4.
+
+- How is it better?
+
+Task 4 required four nearly identical hand written plotting blocks (fitted line, residual segments, model deviation segments, total deviation segments) plus three separate lines to compute RSS, MSS, and TSS, all hardcoded to spruce.df, Height, and BHDiameter specifically. ssDecomp() generalizes that entire pattern into a single reusable function call that works on any data frame and any one predictor formula. It fits the model, draws all four panels in one layout() call, prints a numeric check that TSS = MSS + RSS, and returns the fitted model plus RSS, MSS, TSS, and R squared so the numbers can be reused instead of retyped. It ships with a documented spruce.df dataset built into the package and a testthat unit test checking TSS = MSS + RSS, and it passes R CMD check with 0 errors, 0 warnings, 0 notes.
+
+- Install and check
+
+I built the package MATH4753LucNguyenF26, installed it, and ran R CMD check. Last lines of the check:
+
+✔  checking Rd \usage sections ...
+✔  checking Rd contents ...
+✔  checking for unstated dependencies in examples ...
+✔  checking contents of ‘data’ directory
+✔  checking data for non-ASCII characters ...
+✔  checking LazyData
+✔  checking data for ASCII and uncompressed saves ...
+✔  checking examples (372ms)
+✔  checking for unstated dependencies in ‘tests’ ...
+─  checking tests ...
+✔  Running ‘testthat.R’
+✔  checking for non-standard things in the check directory
+✔  checking for detritus in the temp directory
+   
+   
+── R CMD check results ────────────────────────── MATH4753LucNguyenF26 0.0.0.9000 ────
+Duration: 6.3s
+
+0 errors ✔ | 0 warnings ✔ | 0 notes ✔
+
+- Invoke the function
+```{r}
+MATH4753LucNguyenF26::ssDecomp(data = spruce.df, formula = Height ~ BHDiameter)
+```
+- Body of the function
+```{r}
+ssDecomp <- function(data, formula, col_mss = "Red", col_tss = "Green", pt_bg = "Blue") {
+  # fit the model here so the caller only has to pass data + formula,
+  # matching the data = ..., etc call style used throughout this lab
+  model <- lm(formula, data = data)
+
+  # pull the response and the single predictor straight out of the model
+  mf <- model.frame(model)
+  y <- mf[[1]]
+  x <- mf[[2]]
+  xname <- names(mf)[2]
+  yname <- names(mf)[1]
+
+  yhat <- fitted(model)
+  ybar <- mean(y)
+
+  # the three sums of squares and R squared, computed once and reused
+  # across all four panels instead of recomputed per plot
+  RSS <- sum((y - yhat) ^ 2)
+  MSS <- sum((yhat - ybar) ^ 2)
+  TSS <- sum((y - ybar) ^ 2)
+  Rsquared <- MSS / TSS
+
+  # restore the caller's plotting parameters when this function exits
+  op <- par(no.readonly = TRUE)
+  on.exit(par(op))
+  layout(matrix(1:4, nrow = 2, ncol = 2, byrow = TRUE))
+
+  ylim <- c(0, 1.1 * max(y))
+  xlim <- c(0, 1.1 * max(x))
+
+  # panel 1: scatter plot with the fitted least squares line
+  plot(x, y, pch = 21, bg = pt_bg, xlab = xname, ylab = yname,
+       xlim = xlim, ylim = ylim, main = "Fitted line")
+  abline(model)
+
+  # panel 2: residual deviations, y minus yhat (RSS)
+  plot(x, y, pch = 21, bg = pt_bg, xlab = xname, ylab = yname,
+       xlim = xlim, ylim = ylim, main = "RSS")
+  abline(model)
+  segments(x, y, x, yhat)
+
+  # panel 3: model deviations, yhat minus ybar (MSS)
+  plot(x, y, pch = 21, bg = pt_bg, xlab = xname, ylab = yname,
+       xlim = xlim, ylim = ylim, main = "MSS")
+  abline(model)
+  abline(h = ybar)
+  segments(x, ybar, x, yhat, col = col_mss)
+
+  # panel 4: total deviations, y minus ybar (TSS)
+  plot(x, y, pch = 21, bg = pt_bg, xlab = xname, ylab = yname,
+       xlim = xlim, ylim = ylim, main = "TSS")
+  abline(h = ybar)
+  segments(x, y, x, ybar, col = col_tss)
+
+  # print a quick numeric check that TSS = MSS + RSS
+  cat(sprintf(
+    "RSS = %.4f\nMSS = %.4f\nTSS = %.4f\nR-squared (MSS/TSS) = %.4f\nTSS - (MSS + RSS) = %.6f\n",
+    RSS, MSS, TSS, Rsquared, TSS - (MSS + RSS)
+  ))
+
+  invisible(list(model = model, RSS = RSS, MSS = MSS, TSS = TSS, Rsquared = Rsquared))
+}
+```
+
+- Interpret the output
+
+The function prints RSS = 95.70, MSS = 183.24, TSS = 278.95, R squared = 0.6569, and TSS minus (MSS + RSS) essentially zero, exactly matching what was calculated by hand in Task 4. It produces "better" measures because it is not tied to one dataset, the same call works on any lm-style problem with one predictor, and it returns the numbers as a list instead of leaving them scattered across separate print statements, so they can be reused directly (for example in a table) rather than retyped.

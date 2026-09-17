@@ -1,0 +1,18 @@
+Package: MATH4753LucNguyenF26
+Title: Helper Functions for MATH 4753 Labs
+Version: 0.0.0.9000
+Authors@R: 
+    person("Lucia", "Nguyen", email = "lucia.nguyen@ou.edu", role = c("aut", "cre"))
+Description: A small collection of helper functions written for MATH 4753
+    at the University of Oklahoma, starting with a reusable sum of squares
+    decomposition plot for simple linear regression models.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Depends: 
+    R (>= 2.10)
+LazyData: true
+Config/roxygen2/version: 8.1.0
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
