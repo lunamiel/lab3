@@ -153,18 +153,30 @@ predict(spruce.lm, data.frame(BHDiameter = c(15, 18, 20)))
 At 15cm: 16.37m, at 18cm: 17.81m, at 20cm: 18.78m.
 
 ## Task 6
+- ggplot of Height vs Diameter with shading and legend.
+```{r, warning=FALSE}
+library(ggplot2)
+g = ggplot(spruce.df, aes(x = BHDiameter, y = Height, colour = BHDiameter))
+g = g + geom_point() + geom_line() + geom_smooth(method = "lm")
+g + ggtitle("Height Vs Diameter")
 
-
-
-
-
+```
 
 
 ## Task 7
-This is how you place images in RMD documents
-
 <center>
-!["name of image"](gheat.png){ width=70% }
+
+- Trend line:
+
+![](trends.png){ width=70% }
+
+- Points line:
+
+![](points.png){ width=70% }
+
+- Line: 
+
+![](line.png){ width=70% }
 </center>
 
 
